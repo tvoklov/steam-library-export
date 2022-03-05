@@ -1,19 +1,25 @@
 package volk.steam.libraryexport
 package steam
 
+import steam.Types._
+
 import org.http4s.Uri
 import org.http4s.implicits._
 
-object Paths {
+private [steam] object Paths {
 
-  private[steam] val root: Uri = uri"https://api.steampowered.com"
+  private val apiRoot: Uri = uri"https://api.steampowered.com"
+  private val storeRoot: Uri = uri"https://store.steampowered.com"
 
-  private[steam] val ISteamUserRoot: Uri     = root / "ISteamUser"
-  private[steam] val ISteamUserStats: Uri     = root / "ISteamUserStats"
-  private[steam] val IPlayerServiceRoot: Uri = root / "IPlayerService"
+  private val ISteamUserRoot: Uri     = apiRoot / "ISteamUser"
+  private val ISteamUserStats: Uri    = apiRoot / "ISteamUserStats"
+  private val IPlayerServiceRoot: Uri = apiRoot / "IPlayerService"
 
-  private[steam] val resolveVanityURLRoot: Uri = ISteamUserRoot / "ResolveVanityURL" / "v1"
-  private[steam] val getOwnedGamesRoot: Uri    = IPlayerServiceRoot / "GetOwnedGames" / "v1"
-  private[steam] val getUserStatsForGameRoot: Uri    = ISteamUserStats / "GetUserStatsForGame" / "v2"
+  val resolveVanityURLRoot: Uri    = ISteamUserRoot / "ResolveVanityURL" / "v1"
+  val getOwnedGamesRoot: Uri       = IPlayerServiceRoot / "GetOwnedGames" / "v1"
+  val getUserStatsForGameRoot: Uri = ISteamUserStats / "GetUserStatsForGame" / "v2"
+
+  val reviewsRoot: AppID => Uri = storeRoot / "appreviews" / _
+  val detailsRoot: Uri = storeRoot / "api" / "appdetails"
 
 }

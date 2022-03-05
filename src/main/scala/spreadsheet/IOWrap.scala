@@ -2,7 +2,7 @@ package volk.steam.libraryexport
 package spreadsheet
 
 import cats.effect.IO
-import spoiwo.model.{Sheet, Workbook}
+import spoiwo.model.{ Sheet, Workbook }
 
 object IOWrap {
 
