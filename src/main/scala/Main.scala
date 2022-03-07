@@ -1,5 +1,7 @@
 package volk.steam.libraryexport
 
+import `export`.CustomExport
+
 import cats.effect._
 
 object Main extends IOApp {
@@ -7,7 +9,7 @@ object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     readArgs(args) match {
       case Left(value)                  => IO.raiseError(new Throwable(value))
-      case Right(Args(uid, akey, file)) => App.runApp(akey, uid, file)
+      case Right(Args(uid, akey, file)) => CustomExport.run(akey, uid, file)
     }
 
   case class Args(userID: String, apiKey: String, filename: String)

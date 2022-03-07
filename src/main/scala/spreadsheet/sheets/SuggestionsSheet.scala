@@ -11,11 +11,11 @@ object SuggestionsSheet {
   def make(games: List[(GameInfo, ReviewStats)]): Sheet = {
     def gameOrdering(totalPlaytime: Int, recentPlaytime: Int, reviewStats: ReviewStats): Float = {
       // i'm trying to include these factors:
-      // 1. the game is higher in the list if it has a lot of positive reviews
+      // 1. the game is higher in the list if it has a higher positive review percentage
       // 2. the game is lower in the list if the player had already played it
       // 3. the game is lower in the list if the player had RECENTLY played it
 
-      (10000f - reviewStats.positiveReviewCount) + ((totalPlaytime / 100f) * reviewStats.positiveReviewPercentage) + (recentPlaytime * 150f)
+      (1000f * reviewStats.negativeReviewPercentage) + ((totalPlaytime / 100f) * reviewStats.positiveReviewPercentage) + (recentPlaytime * 150f)
     } |> (_ * 10000) |> (_.toInt)
 
     val gamesSorted = games.sortBy {

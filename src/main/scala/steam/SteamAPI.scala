@@ -13,20 +13,20 @@ import org.http4s.client.Client
 object SteamAPI {
 
   /** @return a proper 64 steam profile id for the given vanityUrl */
-  def resolveVanityURL(vanityUrl: String)(implicit key: SteamAPIKey, client: Client[IO]): IO[SteamID] =
+  def resolveVanityURL(vanityUrl: String)(implicit key: SteamAPIKey, client: Client[IO]): IO[Option[SteamID]] =
     client
       .expect[ResolveVanityJson](
         resolveVanityURLRoot +? ("key", key) +? ("vanityurl", vanityUrl)
       )
-      .map(_.response)
-      .flatMap {
-        case ResolveVanityResponse(steamId, 1) => IO.pure(steamId)
+      .map(_.response match {
+        case ResolveVanityResponse(steamId, 1) => Some(steamId)
         case ResolveVanityResponse(steamId, success) =>
-          IO.raiseError(new Throwable(s"ResolveVanityURL returned $success in 'success' field (steamid: $steamId)"))
-      }
+          scribe.debug(s"resolve vanity url return $success as success field for url $vanityUrl.")
+          None
+      })
 
-  /** @return a list of games a player owns along with some playtime information */
-  def getOwnedGames(userId: SteamID, includeFreeGames: Boolean = false)(implicit key: SteamAPIKey, client: Client[IO]): IO[OwnedGames] =
+  /** @return a list of apps a player owns along with some playtime information */
+  def getOwnedApps(userId: SteamID, includeFreeGames: Boolean = false)(implicit key: SteamAPIKey, client: Client[IO]): IO[OwnedGames] =
     client
       .expect[GetOwnedGamesJson](
         getOwnedGamesRoot +? ("key", key) +? ("steamid", userId) +? ("include_appinfo", true) +? ("include_played_free_games", includeFreeGames)
@@ -40,6 +40,41 @@ object SteamAPI {
           )
       }
 
+  /** Performs the same thing as #getOwnedApps, but on top of that makes sure that the returned games are actually games
+    * (not dlcs, movies, etc)
+    * @note because of the way steam's api works, can return software. (steam's api gives it the type "game").
+    * @note on libraries bigger than 200 games this will crash,
+    *       use a [[volk.steam.libraryexport.cache.CacheStuff "caching"]] solution instead
+    */
+  def getOwnedGames(userId: SteamID, includeFreeGames: Boolean = false)(implicit key: SteamAPIKey, client: Client[IO]): IO[List[GameInfo]] =
+    for {
+      allOwnedApps <- {
+        scribe.debug("getting owned apps")
+        getOwnedApps(userId)
+      }
+
+      ownedGames <- {
+        scribe.info("filtering out free games and non-game apps")
+        for {
+          validStoreAppIds <- filterInvalidStoreApps(allOwnedApps.games.map(_.appid), filterFree = includeFreeGames)
+
+          filtered = allOwnedApps.games.filter(
+            g => validStoreAppIds.contains(g.appid)
+          )
+
+          appDetails <-
+            IO.parSequenceN(30)(
+              filtered.map(
+                game => for { res <- getAppDetails(game.appid) } yield game -> res
+              )
+            )
+
+        } yield appDetails.collect {
+          case (game, Some(GameTypeInfo(false, Game))) => game
+        }
+      }
+    } yield ownedGames
+
   /** @return a list of achievements for this user by app id */
   def getUserStatsForGame(userId: SteamID, appId: AppID)(implicit key: SteamAPIKey, client: Client[IO]): IO[UserStats] =
     client
@@ -52,6 +87,9 @@ object SteamAPI {
           UserStats(achievements.size)
       }
 
+  /** @return review stats for given app
+    * @note uses store api, which is not really meant to be used for anything other than browsing steam itself. so expect timeouts
+    */
   def getUserReviewScores(appId: AppID)(implicit client: Client[IO]): IO[ReviewStats] =
     for {
       json <-
@@ -71,6 +109,7 @@ object SteamAPI {
       summary.total_reviews
     )
 
+  /** @note uses store api, which is not really meant to be used for anything other than browsing steam itself. so expect timeouts */
   def getAppDetails(appId: AppID)(implicit client: Client[IO]): IO[Option[GameTypeInfo]] =
     client
       .expect[Json](
@@ -98,15 +137,12 @@ object SteamAPI {
     for {
       isFree      <- cursor.get[Boolean]("is_free")
       appTypeJson <- cursor.get[String]("type")
-      appType <-
-        AppType
-          .toAppType(appTypeJson)
-          .toRight(DecodingFailure(s"Weird app type in json: $appTypeJson", Nil))
-    } yield GameTypeInfo(
-      isFree,
-      appType
-    )
+    } yield GameTypeInfo(isFree, AppType.toAppType(appTypeJson))
 
+  /** Checks whether given ids are valid steam store apps.
+    * @param filterFree whether to return appids of free apps
+    * @return valid steam store apps
+    */
   def filterInvalidStoreApps(ids: List[AppID], filterFree: Boolean)(implicit client: Client[IO]): IO[List[AppID]] =
     IO.parSequenceN(3)(
       ids

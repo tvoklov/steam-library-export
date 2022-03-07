@@ -111,35 +111,49 @@ object Entities {
   ) {
     lazy val positiveReviewPercentage: Int =
       (positiveReviewCount / (totalReviewCount / 100f)).floor.toInt
+
+    lazy val negativeReviewPercentage: Int = 100 - positiveReviewPercentage // it's easier this way
   }
 
   object AppType {
-    def toAppType: String => Option[AppType] = {
-      case "game"   => Some(Game)
-      case "mod"    => Some(Mod)
-      case "dlc"    => Some(DLC)
-      case "series" => Some(Series)
-      case "advertising" => Some(Advertising)
-      case "video" => Some(Video)
-      case "demo" => Some(Demo)
-      case _        => None
+    // this used to be a (String => Option) function (which is a proper signature for a parser function),
+    // but i got tired of adding weird steam app types.
+
+    // btw, steam has made like 5 types for non-gaming related entertainment,
+    // while software like blender is marked as a "game"
+
+    def toAppType: String => AppType = {
+      case "game"        => Game
+      case "mod"         => Mod
+      case "dlc"         => DLC
+      case "series"      => Series
+      case "episode"     => Episode
+      case "advertising" => Advertising
+      case "video"       => Video
+      case "demo"        => Demo
+      case "music"       => Music
+      case _             => Other
     }
   }
 
   trait AppType
 
-  trait Playable extends AppType
-  case object Game   extends Playable
-  case object Mod    extends Playable
+  trait Playable   extends AppType
+  case object Game extends Playable
+  case object Mod  extends Playable
 
-  trait Additions extends AppType
-  case object DLC    extends Additions
-  case object Demo    extends Additions
+  trait Additions  extends AppType
+  case object DLC  extends Additions
+  case object Demo extends Additions
 
-  trait Viewable extends AppType
-  case object Series extends Viewable
-  case object Video extends Viewable
+  trait Viewable          extends AppType
+  case object Series      extends Viewable
+  case object Episode     extends Viewable
+  case object Video       extends Viewable
   case object Advertising extends Viewable
+  case object Music       extends Viewable
+
+  case object Other extends AppType
 
   case class GameTypeInfo(
       free: Boolean,
