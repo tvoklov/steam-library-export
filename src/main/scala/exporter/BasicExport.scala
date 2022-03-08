@@ -1,16 +1,16 @@
 package volk.steam.libraryexport
-package `export`
+package exporter
 
 import spreadsheet.IOWrap.SPOIWOIOWB
 import spreadsheet.sheets._
 import steam.Types._
-import steam.{SteamAPI => Steam}
+import steam.{ SteamAPI => Steam }
 
-import cats.effect.{ExitCode, IO}
+import cats.effect.{ ExitCode, IO }
 import org.http4s.blaze.client.BlazeClientBuilder
 import spoiwo.model.Workbook
 
-/** the most basic export, all this does is get your library and put it into an xlsx file*/
+/** the most basic export, all this does is get your library and put it into an xlsx file */
 object BasicExport {
 
   def run(steamAPIKey: SteamAPIKey, steamID: SteamID, resultFile: String): IO[ExitCode] =
@@ -30,26 +30,14 @@ object BasicExport {
             }
 
             allOwnedApps <- {
-              scribe.info("getting your games")
+              scribe.info("getting your apps")
               Steam.getOwnedApps(userId)
-            }
-
-            gamesWithScores <- {
-              scribe.info("getting review scores of your least played games")
-              IO.parSequenceN(30)(
-                allOwnedApps.games
-                  .filter(_.playtime.allPlaytime <= 120)
-                  .map(
-                    game => for { score <- Steam.getUserReviewScores(game.appid) } yield game -> score
-                  )
-              ).map(_.filter(_._2.totalReviewCount > 0))
             }
 
             wb = {
               scribe.info("generating xlsx workbook")
               Workbook(
-                GameList.make(allOwnedApps.games),
-                SuggestionsSheet.make(gamesWithScores)
+                GameList.make(allOwnedApps.games)
               ).withActiveSheet(0)
             }
 

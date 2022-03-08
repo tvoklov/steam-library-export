@@ -27,7 +27,7 @@ object MapFileCache {
 
 case class MapFileCache[Key, Value](entities: Map[Key, Value], path: Path) {
 
-  def save(implicit keyEncoder: Encoder[(Key, Value)], valueEncoder: Encoder[Value]): IO[Unit] =
+  def save(implicit keyEncoder: Encoder[(Key, Value)]): IO[Unit] =
     IOOps.writeToFile(
       entities.map(_.asJson.noSpaces).toList
     )(path)

@@ -1,20 +1,20 @@
 package volk.steam.libraryexport
-package `export`
+package exporter
 
+import cache.{ Caches, MapFileCache }
+import spreadsheet.IOWrap.SPOIWOIOWB
 import spreadsheet.sheets._
 import steam.Types._
-import steam.{SteamAPI => Steam}
+import steam.{ SteamAPI => Steam }
+import util.Utils.PipingUtil
 
-import cats.effect.{ExitCode, IO}
+import cats.effect.{ ExitCode, IO }
 import org.http4s.blaze.client.BlazeClientBuilder
 import spoiwo.model.Workbook
-import volk.steam.libraryexport.cache.{CacheStuff, MapFileCache}
-import volk.steam.libraryexport.spreadsheet.IOWrap.SPOIWOIOWB
-import volk.steam.libraryexport.util.Utils.PipingUtil
 
 import java.io.File
 
-/** customizable export */
+/** customizable export with multiple sheets. if you want suggestions and/or more in-depth data - use this one. */
 object CustomExport {
 
   def run(steamApiKey: SteamAPIKey, steamId: String, resultFile: String): IO[ExitCode] =
@@ -48,9 +48,11 @@ object CustomExport {
               for {
                 cache <-
                   if (allApps.size == actualGamesCache.entities.size) IO.pure(actualGamesCache)
-                  else CacheStuff.buildCache(allOwnedApps.games.map(_.appid), actualGamesCache)
+                  else Caches.buildIsGameCache(allOwnedApps.games.map(_.appid), actualGamesCache)
 
-                games = cache.entities.collect { case (appId, true) => appId }.toList
+                games = cache.entities.collect {
+                  case (appId, true) => appId
+                }.toList
               } yield allApps.filter(_.appid |> games.contains)
             }
 
@@ -69,6 +71,7 @@ object CustomExport {
               scribe.info("generating xlsx workbook")
               Workbook(
                 GameList.make(actualGames),
+                GamesWithScores.make(gamesWithScores),
                 SuggestionsSheet.make(gamesWithScores)
               ).withActiveSheet(0)
             }

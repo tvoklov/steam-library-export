@@ -6,7 +6,7 @@ import steam.Paths._
 import steam.Types._
 
 import cats.effect._
-import io.circe.{ ACursor, Decoder, DecodingFailure, Json }
+import io.circe.{ ACursor, Decoder, Json }
 import org.http4s.circe._
 import org.http4s.client.Client
 
@@ -40,11 +40,11 @@ object SteamAPI {
           )
       }
 
-  /** Performs the same thing as #getOwnedApps, but on top of that makes sure that the returned games are actually games
+  /** Performs the same thing as [[getOwnedApps]], but on top of that makes sure that the returned games are actually games
     * (not dlcs, movies, etc)
     * @note because of the way steam's api works, can return software. (steam's api gives it the type "game").
-    * @note on libraries bigger than 200 games this will crash,
-    *       use a [[volk.steam.libraryexport.cache.CacheStuff "caching"]] solution instead
+    * @note on libraries bigger than ~200 games this will crash,
+    *       use a [[volk.steam.libraryexport.cache.Caches "caching"]] solution instead
     */
   def getOwnedGames(userId: SteamID, includeFreeGames: Boolean = false)(implicit key: SteamAPIKey, client: Client[IO]): IO[List[GameInfo]] =
     for {
