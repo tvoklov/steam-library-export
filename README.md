@@ -11,5 +11,4 @@ If you did - here you go, a script just for that.
 - You can get your api key [here](https://steamcommunity.com/dev/apikey)
 
 ## Plans:
-- more spreadsheets, for game suggestions and such
-- better looking spreadsheets (trying to figure out how styling works)
+- better looking spreadsheets (when i figure out how styling works)
