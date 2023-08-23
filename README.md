@@ -19,4 +19,4 @@ If you do - here you go, a script that makes an entire xlsx file that contains a
 
 ## Plans:
 
-- better looking spreadsheets (trying to figure out how styling works)
+- better looking spreadsheets (when i figure out how styling works)
