@@ -1,5 +1,4 @@
-package volk.steam.libraryexport
-package steam
+package volk.steam.libraryexport.steam
 
 object Types {
 

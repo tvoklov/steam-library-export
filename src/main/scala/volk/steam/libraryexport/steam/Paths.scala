@@ -1,10 +1,9 @@
-package volk.steam.libraryexport
-package steam
+package volk.steam.libraryexport.steam
 
-import steam.Types._
-
+import org.http4s.implicits.*
 import org.http4s.Uri
-import org.http4s.implicits._
+
+import volk.steam.libraryexport.steam.Types.*
 
 private[steam] object Paths {
 
