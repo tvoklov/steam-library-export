@@ -1,14 +1,22 @@
-Ever wanted to download the full list of games you have in your steam library?
+# volk's steam-library-export
 
-If you did - here you go, a script just for that.
+Ever wanted to download the full list of games you have in your steam library?  
+Or to know how many games you have actually launched?  
+Or even to get some game suggestions?
+
+If you do - here you go, a script that makes an entire xlsx file that contains all of these.
 
 ## Usage:
+
 - install sbt
 - `sbt "run -usr <your profile id> -api <api key> -f <result file path>"`
 
-### FQA:
-- You can use a custom profile id(meaning one that you set up yourself, no one that steam has assigned to you)
+## FYI:
+
+- You can use your custom profile id (meaning one that you set up yourself, like `epicgamer`, not one that steam has
+  assigned to you, like `12345678901234567`)
 - You can get your api key [here](https://steamcommunity.com/dev/apikey)
 
 ## Plans:
+
 - better looking spreadsheets (when i figure out how styling works)
